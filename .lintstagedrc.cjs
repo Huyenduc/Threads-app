@@ -1,3 +1,6 @@
 module.exports = {
-  "**/*.{js,jsx,ts,tsx}": ["yarn check-lint", "yarn typecheck"],
-};
+  "**/*.{js,jsx,ts,tsx}": [
+    "yarn check-lint",
+    "bash -c \"yarn typecheck\""
+  ]
+}
