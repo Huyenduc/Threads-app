@@ -1,9 +1,10 @@
-import { Text, View } from "react-native";
+import { FakeTypingInput } from "@/components/HelloWave";
+import { View } from "react-native";
 
 export default function SearchScreen() {
   return (
     <View>
-      <Text>Search Screen</Text>
+      <FakeTypingInput />
     </View>
   );
 }
