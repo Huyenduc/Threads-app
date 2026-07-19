@@ -31,7 +31,8 @@
       "expo-router",
       "expo-font",
       "expo-web-browser",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
@@ -40,6 +41,13 @@
       "image": "./src/assets/images/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ccaadd7a-cc53-4c6f-93c6-c3967402340d"
+      }
+    },
+    "owner": "huyenduc0601"
   }
 }
