@@ -3,7 +3,7 @@ import { Animated, StyleSheet, Text, View } from "react-native";
 
 export default function HomeScreen() {
   const { handleScroll, handleScrollEnd } = useTabBarAnimation();
-  console.log("HomeScreen rendered");
+
   return (
     <Animated.ScrollView
       onScroll={handleScroll}

@@ -1,5 +1,6 @@
 import { TabBarProvider } from "@/contexts/TabBarContext";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { isLoginAtom } from "@/state/global";
 import {
   DarkTheme,
   DefaultTheme,
@@ -9,6 +10,7 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+import { useAtomValue } from "jotai";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
@@ -46,17 +48,16 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
+  const isLogin = useAtomValue(isLoginAtom);
+
   return (
     <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="new-post"
-        options={{
-          presentation: "modal",
-          headerShown: false,
-          animation: "slide_from_bottom",
-        }}
-      />
+      <Stack.Protected guard={isLogin}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack.Protected>
+      <Stack.Protected guard={!isLogin}>
+        <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+      </Stack.Protected>
       <Stack.Screen name="+not-found" />
     </Stack>
   );
