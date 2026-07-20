@@ -1,10 +1,11 @@
-import { createContext, type ReactNode, useRef } from "react";
-import { Animated } from "react-native";
+import { createContext, type ReactNode } from "react";
+import { type SharedValue, useSharedValue } from "react-native-reanimated";
 
-export const TabBarContext = createContext<Animated.Value | null>(null);
+export const TabBarContext = createContext<SharedValue<number> | null>(null);
 
 export const TabBarProvider = ({ children }: { children: ReactNode }) => {
-  const translateY = useRef(new Animated.Value(0)).current;
+  const translateY = useSharedValue(0);
+
   return (
     <TabBarContext.Provider value={translateY}>
       {children}

@@ -2,22 +2,48 @@ import { HapticTab } from "@/components/HapticTab";
 import { Colors } from "@/constants/Colors";
 import { TAB_BAR_HEIGHT } from "@/constants/tabBar";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { useTabBarAnimation } from "@/hooks/useTabBarAnimation";
+import {
+  useShowTabBar,
+  useTabBarAnimatedStyle,
+} from "@/hooks/useTabBarAnimation";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Octicons from "@expo/vector-icons/Octicons";
+import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import { BottomTabBar } from "@react-navigation/bottom-tabs";
 import { Tabs, useRouter } from "expo-router";
-import { View } from "react-native";
+import { useEffect, useRef } from "react";
+import { StyleSheet, View } from "react-native";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+function AnimatedTabBar(props: BottomTabBarProps) {
+  const animatedStyle = useTabBarAnimatedStyle();
+  const showTabBar = useShowTabBar();
+  const previousTabIndex = useRef(-1);
+
+  useEffect(() => {
+    if (previousTabIndex.current !== props.state.index) {
+      previousTabIndex.current = props.state.index;
+      showTabBar();
+    }
+  }, [props.state.index, showTabBar]);
+
+  return (
+    <Animated.View style={[styles.tabBarContainer, animatedStyle]}>
+      <BottomTabBar {...props} />
+    </Animated.View>
+  );
+}
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
-  const { translateY } = useTabBarAnimation();
   const router = useRouter();
 
   return (
     <Tabs
+      tabBar={(props) => <AnimatedTabBar {...props} />}
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         headerShown: false,
@@ -27,14 +53,8 @@ export default function TabLayout() {
           backgroundColor: Colors[colorScheme ?? "light"].background,
           height: TAB_BAR_HEIGHT,
           paddingTop: 10,
-          position: "absolute",
           ...(insets.bottom === 0 ? { paddingBottom: 3 } : {}),
           borderColor: "transparent",
-          transform: [
-            {
-              translateY,
-            },
-          ],
         },
       }}
     >
@@ -117,3 +137,12 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBarContainer: {
+    position: "absolute",
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+});
