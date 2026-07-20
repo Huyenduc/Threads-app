@@ -1,14 +1,22 @@
 import { useTabBarAnimation } from "@/hooks/useTabBarAnimation";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import { useFocusEffect } from "expo-router";
+import { useCallback } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import Animated from "react-native-reanimated";
 
 export default function HomeScreen() {
-  const { handleScroll, handleScrollEnd } = useTabBarAnimation();
+  const { handleScroll, scrollRef, showTabBar } = useTabBarAnimation();
+
+  useFocusEffect(
+    useCallback(() => {
+      showTabBar();
+    }, [showTabBar]),
+  );
 
   return (
     <Animated.ScrollView
+      ref={scrollRef}
       onScroll={handleScroll}
-      onScrollEndDrag={handleScrollEnd}
-      onMomentumScrollEnd={handleScrollEnd}
       scrollEventThrottle={16}
       style={styles.container}
     >
