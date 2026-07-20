@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from "react-native";
 import Animated from "react-native-reanimated";
 
 export default function HomeScreen() {
-  const { handleScroll, showTabBar } = useTabBarAnimation();
+  const { handleScroll, scrollRef, showTabBar } = useTabBarAnimation();
 
   useFocusEffect(
     useCallback(() => {
@@ -15,6 +15,7 @@ export default function HomeScreen() {
 
   return (
     <Animated.ScrollView
+      ref={scrollRef}
       onScroll={handleScroll}
       scrollEventThrottle={16}
       style={styles.container}

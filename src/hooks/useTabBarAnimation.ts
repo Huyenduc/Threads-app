@@ -7,9 +7,12 @@ import {
 } from "@/constants/tabBar";
 import { TabBarContext } from "@/contexts/TabBarContext";
 import { useCallback, useContext } from "react";
+import type Animated from "react-native-reanimated";
 import {
   cancelAnimation,
   Easing,
+  scrollTo,
+  useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   withDelay,
@@ -29,7 +32,10 @@ const clamp = (value: number, min: number, max: number) => {
 type ScrollContext = {
   previousY?: number;
   direction?: -1 | 1;
+  momentumDirection?: -1 | 1;
   pendingDirectionDistance: number;
+  dragStartedAtTop?: boolean;
+  restoreTargetY?: number;
 };
 
 const useTabBarTranslateY = () => {
@@ -45,6 +51,7 @@ const useTabBarTranslateY = () => {
 export const useTabBarAnimation = () => {
   // This hook provides a scroll handler that can be attached to a scrollable component
   const translateY = useTabBarTranslateY();
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
 
   const handleScroll = useAnimatedScrollHandler<ScrollContext>({
     onBeginDrag: (event, context) => {
@@ -55,7 +62,9 @@ export const useTabBarAnimation = () => {
       );
       context.previousY = clamp(event.contentOffset.y, 0, maxScrollY);
       context.direction = translateY.value >= TAB_BAR_HEIGHT / 2 ? 1 : -1;
+      context.momentumDirection = undefined;
       context.pendingDirectionDistance = 0;
+      context.dragStartedAtTop = context.previousY < 1;
     },
     onScroll: (event, context) => {
       const maxScrollY = Math.max(
@@ -78,6 +87,13 @@ export const useTabBarAnimation = () => {
         return;
       }
 
+      if (context.restoreTargetY !== undefined) {
+        if (Math.abs(currentY - context.restoreTargetY) < 1) {
+          context.restoreTargetY = undefined;
+        }
+        return;
+      }
+
       const diff = currentY - previousY;
 
       if (diff === 0) {
@@ -85,6 +101,15 @@ export const useTabBarAnimation = () => {
       }
 
       const nextDirection = diff > 0 ? 1 : -1;
+
+      // Ignore small reverse offsets while momentum is slowing down.
+      if (
+        context.momentumDirection !== undefined &&
+        context.momentumDirection !== nextDirection
+      ) {
+        return;
+      }
+
       let effectiveDiff = diff;
 
       if (context.direction !== nextDirection && nextDirection === -1) {
@@ -113,19 +138,41 @@ export const useTabBarAnimation = () => {
         TAB_BAR_HEIGHT,
       );
     },
-    onEndDrag: () => {
-      // Momentum begins just after end-drag. The short delay prevents an early
-      // snap; onMomentumBegin cancels it when the list keeps moving.
+    onEndDrag: (_, context) => {
       const target = translateY.value > TAB_BAR_HEIGHT / 2 ? TAB_BAR_HEIGHT : 0;
+
+      if (context.dragStartedAtTop && target === 0) {
+        context.restoreTargetY = 0;
+        translateY.value = withTiming(0, timingConfig);
+        scrollTo(scrollRef, 0, 0, true);
+        return;
+      }
+
+      // Momentum begins just after end-drag. Its event cancels this delayed
+      // snap when the list keeps moving.
       translateY.value = withDelay(
         SNAP_DELAY_MS,
         withTiming(target, timingConfig),
       );
     },
-    onMomentumBegin: () => {
+    onMomentumBegin: (_, context) => {
+      if (context.restoreTargetY !== undefined) {
+        return;
+      }
+
       cancelAnimation(translateY);
+      context.momentumDirection =
+        context.pendingDirectionDistance > 0 ? -1 : context.direction;
     },
-    onMomentumEnd: () => {
+    onMomentumEnd: (_, context) => {
+      if (context.restoreTargetY !== undefined) {
+        context.restoreTargetY = undefined;
+        translateY.value = withTiming(0, timingConfig);
+        return;
+      }
+
+      context.momentumDirection = undefined;
+      context.pendingDirectionDistance = 0;
       const target = translateY.value > TAB_BAR_HEIGHT / 2 ? TAB_BAR_HEIGHT : 0;
       translateY.value = withTiming(target, timingConfig);
     },
@@ -135,6 +182,7 @@ export const useTabBarAnimation = () => {
 
   return {
     handleScroll,
+    scrollRef,
     showTabBar,
   };
 };
